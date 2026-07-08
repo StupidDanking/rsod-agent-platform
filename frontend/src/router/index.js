@@ -1,0 +1,123 @@
+﻿import { createRouter, createWebHistory } from 'vue-router'
+
+const routes = [
+  // ── 登录页 ───────────────────────────────────────
+  {
+    path: '/login',
+    name: 'Login',
+    component: () => import('@/views/LoginPage.vue'),
+    meta: {
+      title: '用户登录',
+      requiresAuth: false,
+    },
+  },
+
+  // ── 注册页 ───────────────────────────────────────
+  {
+    path: '/register',
+    name: 'Register',
+    component: () => import('@/views/RegisterPage.vue'),
+    meta: {
+      title: '用户注册',
+      requiresAuth: false,
+    },
+  },
+
+  // ── 主页面区域：使用 MainLayout 布局 ──────────────
+  {
+    path: '/',
+    component: () => import('@/components/layout/MainLayout.vue'),
+    redirect: '/dashboard',
+    meta: {
+      requiresAuth: true,
+    },
+    children: [
+      {
+        path: 'dashboard',
+        name: 'Dashboard',
+        component: () => import('@/views/DashboardPage.vue'),
+        meta: {
+          title: '数据看板',
+          icon: 'DataAnalysis',
+        },
+      },
+      {
+        path: 'chat',
+        name: 'Chat',
+        component: () => import('@/views/ChatPage.vue'),
+        meta: {
+          title: '智能对话',
+          icon: 'ChatDotRound',
+        },
+      },
+      {
+        path: 'detection',
+        name: 'Detection',
+        component: () => import('@/views/DetectionPage.vue'),
+        meta: {
+          title: '目标检测',
+          icon: 'Aim',
+        },
+      },
+      {
+        path: 'training',
+        name: 'Training',
+        component: () => import('@/views/TrainingPage.vue'),
+        meta: {
+          title: '模型训练',
+          icon: 'Cpu',
+        },
+      },
+      {
+        path: 'history',
+        name: 'History',
+        component: () => import('@/views/HistoryPage.vue'),
+        meta: {
+          title: '历史记录',
+          icon: 'Clock',
+        },
+      },
+    ],
+  },
+
+  // ── 404 兜底 ─────────────────────────────────────
+  {
+    path: '/:pathMatch(.*)*',
+    redirect: '/login',
+  },
+]
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes,
+})
+
+// ── 路由守卫 ───────────────────────────────────────
+// 1. 设置页面标题
+// 2. 未登录访问受保护页面时跳转到登录页
+// 3. 已登录用户访问登录/注册页时跳转到首页
+router.beforeEach((to, from, next) => {
+  document.title = to.meta.title
+    ? `${to.meta.title} - RSOD Agent Platform`
+    : 'RSOD Agent Platform'
+
+  const token = localStorage.getItem('access_token')
+  const requiresAuth = to.matched.some(
+    (record) => record.meta.requiresAuth !== false,
+  )
+
+  if (requiresAuth && !token) {
+    next({
+      path: '/login',
+      query: {
+        redirect: to.fullPath,
+      },
+    })
+  } else if ((to.path === '/login' || to.path === '/register') && token) {
+    next('/dashboard')
+  } else {
+    next()
+  }
+})
+
+export default router

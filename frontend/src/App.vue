@@ -1,7 +1,17 @@
+﻿<template>
+  <router-view />
+</template>
+
 <script setup>
-import HelloWorld from './components/HelloWorld.vue'
+// App.vue 只作为路由出口
+// 实际页面由 Vue Router 控制
 </script>
 
-<template>
-  <HelloWorld />
-</template>
+<style>
+html,
+body,
+#app {
+  width: 100%;
+  height: 100%;
+}
+</style>
