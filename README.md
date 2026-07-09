@@ -2,19 +2,34 @@
 
 基于 YOLOv11 的 PCB 缺陷检测智能体平台。
 
-本项目采用前后端分离架构：
+本项目面向工业质检场景，构建一个基于 YOLOv11 的 PCB 缺陷检测智能体平台。系统支持用户注册登录、PCB 图像上传、缺陷自动检测、检测结果可视化、历史记录管理和智能分析问答。后端基于 FastAPI 构建，使用 PostgreSQL 存储用户、任务和检测结果，使用 MinIO 存储原图与结果图，前端基于 Vue3 和 Element Plus 实现交互界面。
+
+本项目选择题目：
+
+```text
+P12：PCB 缺陷检测系统
+```
+
+---
+
+## 技术栈
 
 - 后端：FastAPI + SQLAlchemy + Alembic + JWT
 - 前端：Vue 3 + Vite + Element Plus + Pinia + Vue Router
-- 基础设施：PostgreSQL + Redis + MinIO + Docker Compose
-- 模型方向：YOLOv11 目标检测
+- 数据库：PostgreSQL
+- 缓存：Redis
+- 文件存储：MinIO
+- 模型方向：YOLOv11 PCB 缺陷检测
+- 数据集格式：YOLO TXT
+- 测试：pytest + Vitest
+- 部署基础：Docker Compose
 
 ---
 
 ## 项目结构
 
 ```text
-rsod-agent-platform/
+pcb-defect-agent-platform/
 ├── backend/              # 后端服务，FastAPI
 │   ├── app/
 │   │   ├── api/          # API 路由
@@ -42,14 +57,83 @@ rsod-agent-platform/
 │   ├── tests/            # 前端 Vitest 测试
 │   ├── vite.config.js    # Vite 配置
 │   └── package.json      # 前端依赖
-├── models/               # YOLOv11 模型文件
-├── datasets/             # 数据集目录
+├── models/               # YOLOv11 PCB 缺陷检测模型文件
+├── datasets/             # PCB 缺陷检测数据集目录
+│   └── pcb_defect/
+│       └── data.yaml     # YOLOv11 数据集配置文件
+├── scripts/              # 工具脚本
+│   └── check_yolo_dataset.py
 ├── docs/                 # 项目文档
+│   └── DAY5_DATASET.md
 ├── docker-compose.yml    # Docker Compose 基础设施编排
 ├── .env.example          # 环境变量示例
 ├── .gitignore            # Git 忽略配置
 └── README.md             # 项目说明
 ```
+
+---
+
+## PCB 缺陷检测任务说明
+
+本项目面向 PCB 工业质检场景，目标是对 PCB 图像中的缺陷进行自动识别和定位。
+
+当前数据集包含 6 类 PCB 缺陷：
+
+```text
+0 mouse_bite        鼠咬
+1 spur              毛刺
+2 missing_hole      缺孔
+3 short             短路
+4 open_circuit      开路
+5 spurious_copper   多余铜
+```
+
+系统最终目标：
+
+```text
+用户上传 PCB 图像
+↓
+后端保存原图到 MinIO
+↓
+调用 YOLOv11 模型进行缺陷检测
+↓
+返回缺陷类别、置信度和检测框
+↓
+保存检测结果到 PostgreSQL
+↓
+结果图保存到 MinIO
+↓
+前端展示检测框、缺陷统计和智能分析报告
+```
+
+---
+
+## 智能体设计
+
+项目后续智能体部分由 1 个总控智能体和 3 个专业智能体组成：
+
+```text
+SupervisorAgent   总控调度智能体
+DetectionAgent    PCB 缺陷检测智能体
+AnalysisAgent     检测结果分析智能体
+QAAgent           PCB 缺陷知识问答智能体
+```
+
+### SupervisorAgent
+
+负责理解用户输入，判断用户意图，并将任务分发给合适的专业智能体。
+
+### DetectionAgent
+
+负责调用 YOLOv11 模型，对 PCB 图片进行缺陷检测，输出缺陷类别、检测框坐标和置信度。
+
+### AnalysisAgent
+
+负责对检测结果进行统计和解释，生成自然语言分析报告，例如缺陷数量、主要缺陷类型、风险等级和维修建议。
+
+### QAAgent
+
+负责回答用户关于 PCB 缺陷、检测流程、模型结果含义等问题。
 
 ---
 
@@ -307,6 +391,68 @@ frontend/tests/
 
 ---
 
+## Day5 完成内容
+
+Day5 主要完成 PCB 缺陷检测数据集获取、YOLO 标注格式理解、数据集目录整理、`data.yaml` 生成和数据集合法性检查。
+
+已完成：
+
+- 确定项目题目为 `P12：PCB 缺陷检测系统`
+- 将项目方向统一为 PCB 工业质检场景
+- 下载 PCB 缺陷检测数据集
+- 确认数据集为 YOLO TXT 标注格式
+- 由于数据集已是 YOLO 格式，当前阶段不需要执行 VOC、COCO、LabelMe 到 YOLO 的格式转换
+- 整理正式数据集目录 `datasets/pcb_defect`
+- 完成 `train / val / test` 数据划分检查
+- 生成 YOLOv11 训练配置文件 `data.yaml`
+- 确定 6 类 PCB 缺陷类别
+- 编写 YOLO 数据集合法性检查脚本
+- 确认图片数量和标签数量一一对应
+
+数据集统计结果：
+
+```text
+train images: 8534
+train labels: 8534
+
+val images: 1066
+val labels: 1066
+
+test images: 1068
+test labels: 1068
+```
+
+总图片数量：
+
+```text
+8534 + 1066 + 1068 = 10668 张
+```
+
+PCB 缺陷类别：
+
+```text
+0 mouse_bite        鼠咬
+1 spur              毛刺
+2 missing_hole      缺孔
+3 short             短路
+4 open_circuit      开路
+5 spurious_copper   多余铜
+```
+
+Day5 新增核心文件：
+
+```text
+datasets/pcb_defect/data.yaml
+scripts/check_yolo_dataset.py
+docs/DAY5_DATASET.md
+```
+
+注意：数据集图片和标签文件体积较大，不提交到 GitHub，只提交 `data.yaml`、数据集说明文档和检查脚本。
+
+后续 Day6 将开始进行 YOLOv11 模型训练。
+
+---
+
 ## 后端启动方式
 
 ### 1. 启动基础设施
@@ -388,6 +534,61 @@ npm run dev
 登录页：http://localhost:5173/login
 注册页：http://localhost:5173/register
 数据看板：http://localhost:5173/dashboard
+PCB 缺陷检测：http://localhost:5173/detection
+智能问答：http://localhost:5173/chat
+模型训练：http://localhost:5173/training
+检测历史：http://localhost:5173/history
+```
+
+---
+
+## 数据集说明
+
+正式数据集路径：
+
+```text
+datasets/pcb_defect
+```
+
+正式 `data.yaml` 路径：
+
+```text
+datasets/pcb_defect/data.yaml
+```
+
+数据集说明文档：
+
+```text
+docs/DAY5_DATASET.md
+```
+
+数据集检查脚本：
+
+```text
+scripts/check_yolo_dataset.py
+```
+
+运行数据集检查：
+
+```bash
+python scripts/check_yolo_dataset.py
+```
+
+正式 `data.yaml` 内容：
+
+```yaml
+path: D:/实习/rsod-agent-platform/datasets/pcb_defect
+train: train/images
+val: val/images
+test: test/images
+
+names:
+  0: mouse_bite
+  1: spur
+  2: missing_hole
+  3: short
+  4: open_circuit
+  5: spurious_copper
 ```
 
 ---
@@ -543,9 +744,41 @@ docker compose logs -f
 
 ---
 
+## Git 提交说明
+
+不提交：
+
+```text
+.venv/
+node_modules/
+frontend/dist/
+backend/logs/
+backend/.env
+frontend/.env
+datasets/raw/
+datasets/pcb_defect/train/
+datasets/pcb_defect/val/
+datasets/pcb_defect/test/
+```
+
+可以提交：
+
+```text
+README.md
+docs/
+scripts/
+backend/
+frontend/
+.env.example
+docker-compose.yml
+datasets/pcb_defect/data.yaml
+```
+
+---
+
 ## 当前项目状态
 
-截至 Day4，项目已经完成：
+截至 Day5，项目已经完成：
 
 ```text
 后端基础架构
@@ -565,6 +798,10 @@ Vue3 前端基础架构
 前端错误监控
 前端 Vitest 测试框架
 前端构建验证
+PCB 缺陷检测数据集准备
+YOLO 数据集目录整理
+YOLOv11 data.yaml 配置
+数据集合法性检查脚本
 ```
 
-后续 Day5 将继续完善业务页面、检测任务、模型训练或智能体相关功能。
+后续 Day6 将继续进行 YOLOv11 模型训练、训练结果保存和模型推理验证。
