@@ -2,9 +2,9 @@
   <div class="auth-page">
     <div class="auth-card">
       <div class="auth-header">
-        <div class="logo-icon">🎯</div>
-        <h1>RSOD Agent Platform</h1>
-        <p>基于 YOLOv11 的目标检测智能体平台</p>
+        <div class="logo-icon">🔬</div>
+        <h1>{{ appTitle }}</h1>
+        <p>基于 YOLOv11 的 PCB 缺陷检测智能体平台</p>
       </div>
 
       <el-form
@@ -72,6 +72,8 @@ import { useUserStore } from '@/stores/user'
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+
+const appTitle = import.meta.env.VITE_APP_TITLE || 'PCB Defect Agent Platform'
 
 const loginFormRef = ref()
 const loading = ref(false)

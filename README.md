@@ -1,6 +1,6 @@
-# rsod-agent-platform
+# pcb-defect-agent-platform
 
-基于 YOLOv11 的目标检测智能体平台。
+基于 YOLOv11 的 PCB 缺陷检测智能体平台。
 
 本项目采用前后端分离架构：
 

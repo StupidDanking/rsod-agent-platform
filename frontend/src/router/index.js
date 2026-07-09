@@ -1,7 +1,8 @@
 ﻿import { createRouter, createWebHistory } from 'vue-router'
 
+const appTitle = import.meta.env.VITE_APP_TITLE || 'PCB Defect Agent Platform'
+
 const routes = [
-  // ── 登录页 ───────────────────────────────────────
   {
     path: '/login',
     name: 'Login',
@@ -11,8 +12,6 @@ const routes = [
       requiresAuth: false,
     },
   },
-
-  // ── 注册页 ───────────────────────────────────────
   {
     path: '/register',
     name: 'Register',
@@ -22,8 +21,6 @@ const routes = [
       requiresAuth: false,
     },
   },
-
-  // ── 主页面区域：使用 MainLayout 布局 ──────────────
   {
     path: '/',
     component: () => import('@/components/layout/MainLayout.vue'),
@@ -46,7 +43,7 @@ const routes = [
         name: 'Chat',
         component: () => import('@/views/ChatPage.vue'),
         meta: {
-          title: '智能对话',
+          title: '智能问答',
           icon: 'ChatDotRound',
         },
       },
@@ -55,7 +52,7 @@ const routes = [
         name: 'Detection',
         component: () => import('@/views/DetectionPage.vue'),
         meta: {
-          title: '目标检测',
+          title: 'PCB 缺陷检测',
           icon: 'Aim',
         },
       },
@@ -73,14 +70,12 @@ const routes = [
         name: 'History',
         component: () => import('@/views/HistoryPage.vue'),
         meta: {
-          title: '历史记录',
+          title: '检测历史',
           icon: 'Clock',
         },
       },
     ],
   },
-
-  // ── 404 兜底 ─────────────────────────────────────
   {
     path: '/:pathMatch(.*)*',
     redirect: '/login',
@@ -92,14 +87,10 @@ const router = createRouter({
   routes,
 })
 
-// ── 路由守卫 ───────────────────────────────────────
-// 1. 设置页面标题
-// 2. 未登录访问受保护页面时跳转到登录页
-// 3. 已登录用户访问登录/注册页时跳转到首页
 router.beforeEach((to, from, next) => {
   document.title = to.meta.title
-    ? `${to.meta.title} - RSOD Agent Platform`
-    : 'RSOD Agent Platform'
+    ? `${to.meta.title} - ${appTitle}`
+    : appTitle
 
   const token = localStorage.getItem('access_token')
   const requiresAuth = to.matched.some(
