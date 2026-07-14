@@ -4,13 +4,16 @@ FastAPI 应用入口
 PCB Defect Agent Platform
 基于 YOLOv11 的 PCB 缺陷检测智能体平台
 """
-
+from app.api.history import router as history_router
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.auth import router as auth_router
 from app.api.health import router as health_router
 from app.api.training import router as training_router
+from app.api.detection import router as detection_router
+from app.api.chat import router as chat_router
+from app.api.models import router as models_router
 
 from app.config.settings import settings
 from app.core.exceptions import register_exception_handlers
@@ -51,6 +54,10 @@ app.add_middleware(
 app.include_router(auth_router, prefix="/api/auth")
 app.include_router(health_router)
 app.include_router(training_router)
+app.include_router(history_router)
+app.include_router(detection_router)
+app.include_router(chat_router)
+app.include_router(models_router)
 
 @app.get("/", summary="根路径")
 def root():

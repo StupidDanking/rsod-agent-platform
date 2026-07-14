@@ -14,7 +14,6 @@ class Settings(BaseSettings):
     LOG_BACKUP_COUNT: int = 5
 
     # PostgreSQL 数据库配置
-    # 暂时保留 rsod_agent，避免重建 Docker volume 和 Alembic 迁移。
     DB_HOST: str = "localhost"
     DB_PORT: int = 5432
     DB_NAME: str = "pcb_aoi_agent"
@@ -42,13 +41,19 @@ class Settings(BaseSettings):
     MINIO_SECRET_KEY: str = "minioadmin"
     MINIO_BUCKET: str = "pcb-aoi-images"
     MINIO_SECURE: bool = False
-    
-     # YOLOv11 训练配置
+
+    # YOLOv11 训练 / 检测配置
     TRAIN_OUTPUT_DIR: str = "runs/train"
     DATASET_BASE_DIR: str = "../datasets/pcb_defect"
     DEFAULT_YOLO_MODEL: str = "yolo11n.pt"
     DEFAULT_TRAIN_DEVICE: str = "0"
-    
+
+    # Qwen 大模型配置
+    # 推荐先使用通用 OpenAI-compatible 地址
+    QWEN_API_KEY: str = ""
+    QWEN_BASE_URL: str = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    QWEN_MODEL: str = "qwen-plus"
+
     # JWT 配置
     JWT_SECRET_KEY: str = "pcb-aoi-dev-secret-key-2026"
     JWT_ALGORITHM: str = "HS256"
@@ -63,7 +68,11 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins_list(self) -> list[str]:
-        return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",")]
+        return [
+            origin.strip()
+            for origin in self.ALLOWED_ORIGINS.split(",")
+            if origin.strip()
+        ]
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -1,84 +1,85 @@
 ﻿import { createRouter, createWebHistory } from 'vue-router'
 
-const appTitle = import.meta.env.VITE_APP_TITLE || 'PCB Defect Agent Platform'
+import GuestHomePage from '@/views/GuestHomePage.vue'
+import LoginPage from '@/views/LoginPage.vue'
+import RegisterPage from '@/views/RegisterPage.vue'
+
+import AppShell from '@/layout/AppShell.vue'
+import ChatPage from '@/views/ChatPage.vue'
+import DetectionPage from '@/views/DetectionPage.vue'
+import TrainingPage from '@/views/TrainingPage.vue'
+import ModelsPage from '@/views/ModelsPage.vue'
 
 const routes = [
   {
+    path: '/',
+    name: 'GuestHome',
+    component: GuestHomePage,
+    meta: {
+      public: true,
+      guestOnly: true,
+    },
+  },
+  {
     path: '/login',
     name: 'Login',
-    component: () => import('@/views/LoginPage.vue'),
+    component: LoginPage,
     meta: {
-      title: '用户登录',
-      requiresAuth: false,
+      public: true,
+      guestOnly: true,
     },
   },
   {
     path: '/register',
     name: 'Register',
-    component: () => import('@/views/RegisterPage.vue'),
+    component: RegisterPage,
     meta: {
-      title: '用户注册',
-      requiresAuth: false,
+      public: true,
+      guestOnly: true,
     },
   },
   {
     path: '/',
-    component: () => import('@/components/layout/MainLayout.vue'),
-    redirect: '/dashboard',
-    meta: {
-      requiresAuth: true,
-    },
+    component: AppShell,
+    redirect: '/chat',
     children: [
-      {
-        path: 'dashboard',
-        name: 'Dashboard',
-        component: () => import('@/views/DashboardPage.vue'),
-        meta: {
-          title: '数据看板',
-          icon: 'DataAnalysis',
-        },
-      },
       {
         path: 'chat',
         name: 'Chat',
-        component: () => import('@/views/ChatPage.vue'),
+        component: ChatPage,
         meta: {
-          title: '智能问答',
-          icon: 'ChatDotRound',
+          roles: ['user', 'developer', 'admin'],
         },
       },
       {
         path: 'detection',
         name: 'Detection',
-        component: () => import('@/views/DetectionPage.vue'),
+        component: DetectionPage,
         meta: {
-          title: 'PCB 缺陷检测',
-          icon: 'Aim',
+          roles: ['user', 'developer', 'admin'],
         },
       },
       {
         path: 'training',
         name: 'Training',
-        component: () => import('@/views/TrainingPage.vue'),
+        component: TrainingPage,
         meta: {
-          title: '模型训练',
-          icon: 'Cpu',
+          roles: ['developer', 'admin'],
         },
       },
       {
-        path: 'history',
-        name: 'History',
-        component: () => import('@/views/HistoryPage.vue'),
+        path: 'models',
+        name: 'Models',
+        component: ModelsPage,
         meta: {
-          title: '检测历史',
-          icon: 'Clock',
+          roles: ['developer', 'admin'],
         },
       },
     ],
   },
   {
     path: '/:pathMatch(.*)*',
-    redirect: '/login',
+    redirect: '/',
   },
 ]
 
@@ -88,27 +89,32 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  document.title = to.meta.title
-    ? `${to.meta.title} - ${appTitle}`
-    : appTitle
+  const token =
+    localStorage.getItem('access_token') ||
+    localStorage.getItem('token')
 
-  const token = localStorage.getItem('access_token')
-  const requiresAuth = to.matched.some(
-    (record) => record.meta.requiresAuth !== false,
-  )
+  const role =
+    localStorage.getItem('user_role') ||
+    localStorage.getItem('role') ||
+    'user'
 
-  if (requiresAuth && !token) {
-    next({
-      path: '/login',
-      query: {
-        redirect: to.fullPath,
-      },
-    })
-  } else if ((to.path === '/login' || to.path === '/register') && token) {
-    next('/dashboard')
-  } else {
-    next()
+  if (to.meta.public) {
+    if (to.meta.guestOnly && token) {
+      return next('/chat')
+    }
+
+    return next()
   }
+
+  if (!token) {
+    return next('/login')
+  }
+
+  if (to.meta.roles && !to.meta.roles.includes(role)) {
+    return next('/chat')
+  }
+
+  next()
 })
 
 export default router
